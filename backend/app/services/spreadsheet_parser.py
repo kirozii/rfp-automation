@@ -7,25 +7,15 @@ class SpreadsheetHandler:
         Initializes an instance of the SpreadsheetHandler. Use a single instance for a single spreadsheet.
 
         Args:
-            input: The spreadsheet to extract questions from. Do not provide the file extension.
+            input: The spreadsheet to extract questions from.
         """
-        self.input = "files/" + input + ".xlsx"
-        self.output = "files/" + input + "output.xlsx"
-
-    def set_output(self, output: str) -> None:
-        """
-        Sets the output spreadsheet to the one provided.
-
-        Args:
-            output: Output spreadsheet. Do not provide the file extension.
-        """
-        self.output = output + ".xlsx"
+        self.path = "files/" + input
 
     def extract_questions(self) -> pd.DataFrame:
         """
         Extracts questions from the given input file and returns the dataframe.
         """
-        self.questions_df = pd.read_excel(self.input, engine='openpyxl')
+        self.questions_df = pd.read_excel(self.path, engine='openpyxl')
 
         return self.questions_df
 
@@ -39,4 +29,4 @@ class SpreadsheetHandler:
         self.responses_df = pd.DataFrame(input)
         output_df = pd.concat([self.questions_df, self.responses_df], axis=1)
 
-        output_df.to_excel(self.output, index=False, engine='openpyxl')
+        output_df.to_excel(self.path, index=False, engine='openpyxl')
