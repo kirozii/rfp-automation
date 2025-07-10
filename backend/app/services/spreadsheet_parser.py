@@ -1,4 +1,5 @@
 from typing import Dict, List
+import os
 import pandas as pd
 
 class SpreadsheetHandler:
@@ -10,6 +11,7 @@ class SpreadsheetHandler:
             input: The spreadsheet to extract questions from.
         """
         self.path = "files/" + input
+
 
     def extract_questions(self) -> pd.DataFrame:
         """

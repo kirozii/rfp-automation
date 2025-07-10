@@ -17,6 +17,9 @@ router = APIRouter(
 @router.post("/uploadfile")
 async def create_upload_file(file: UploadFile = File(...)):
     if file.filename:
+        if not os.path.isdir("files"):
+            os.mkdir("files")
+
         file_location = "files/" + file.filename
         try:
             with open(file_location, "wb") as f:
