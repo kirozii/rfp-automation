@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pydantic-settings
+python-dotenv
+langchain-core
+langchain-google-genai
+python-pptx
+pandas
+openpyxl
