@@ -27,14 +27,14 @@ class Generator:
             Dictionary in the format {"Answer": response}
         """
         messages = [
-            SystemMessage(content="You are a technical assistant. Provide a concise answer."),
+            SystemMessage(content="You are a technical assistant. Provide a concise answer. Aim for 150-200 words."),
         #     HumanMessage(content=f"""
         #         Question: {question}.
         #         Structure your response as follows:
         #
         #         Answer: [concise answer]
         #         Solution: [step-by-step solution]
-        #         Implementation: [code if applicable]
+        #         Implementation: [code if applicable] 
         #         TechStack: [comma-seperated technologies]
         #     """)
             HumanMessage(content=question)

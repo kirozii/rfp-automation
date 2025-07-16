@@ -1,4 +1,5 @@
 from fastapi.responses import FileResponse
+import pandas as pd
 from app.services.spreadsheet_parser import SpreadsheetHandler
 from app.services.answer_generator import Generator
 from app.services.ppt_generator import PresentationGenerator
@@ -8,7 +9,6 @@ import os
 
 uploaded_files = []
 allowed_extensions = [".xlsx"]
-MAX_FILES = 5
 
 router = APIRouter(
     prefix="/files",
@@ -30,15 +30,28 @@ async def create_upload_file(file: UploadFile = File(...)):
         finally:
             await file.close()
 
-        # Would store metadata here to db
-        uploaded_files.append(file.filename)
-        await generate_spreadsheet(file.filename)
+        # Would store metadata here to db .
+        uploaded_files.append({'name': file.filename, 'generated': False, 'pptGenerated': False})
         return {'message': "File uploaded"}
 
+@router.post("/generate/{filename}")
+async def generate_answers(filename: str):
+    await generate_spreadsheet(filename)
+    found = False
+    for item in uploaded_files:
+        if item['name'] == filename:
+            if item['generated']:
+                return {"message": f"File '{filename}' was already generated!", "status": "already_generated"}
+            item['generated'] = True
+            found = True
+            break
+    if not found:
+        raise HTTPException(status_code=404, detail="File not found in in-memory database to update status")
+    return {'message': 'File generated!'}
 
 @router.get("/")
 async def get_uploaded_files():
-    return uploaded_files[-MAX_FILES:]
+    return uploaded_files
 
 @router.get("/download/{filename}")
 async def download_file(filename: str):
@@ -48,6 +61,41 @@ async def download_file(filename: str):
         raise HTTPException(status_code=404, detail="File not found")
 
     return FileResponse(path=file_path, filename=filename)
+
+@router.get("/downloadppt/{filename}")
+async def download_ppt(filename: str):
+    print("PPTDOWN: Downloading ppt for: ", filename)
+    filename = filename.rstrip(".xlsx") + ".pptx"
+    file_path = "ppts/" + filename
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+
+    return FileResponse(path=file_path, filename=filename)
+
+@router.post("/generateppt/{filename}")
+async def generate_ppt(filename: str):
+    df = pd.read_excel("files/" + filename, engine='openpyxl')
+    required_cols = ["Questions", "Answer"]
+    if not all(col in df.columns for col in required_cols):
+        missing_cols = [col for col in required_cols if col not in df.columns]
+        print(f"PPTGEN: '{filename}' is missing required columns: {missing_cols}.")
+        return
+    qlist = df["Questions"].fillna('').to_list()
+    answers_raw = df["Answer"].fillna('').to_list()
+    responses_for_packing = [{"Answer": ans} for ans in answers_raw]
+    content_for_ppt = pack_data(qlist, responses_for_packing)
+    gen_ppt(content_for_ppt, filename)
+    found = False
+    for item in uploaded_files:
+        if item['name'] == filename:
+            if item['pptGenerated']:
+                return {"message": f"PPT '{filename}' was already generated!", "status": "already_generated"}
+            item['pptGenerated'] = True
+            found = True
+            break
+    if not found:
+        raise HTTPException(status_code=404, detail="File not found in in-memory database to update status")
+    print("PPTGEN: Finished generating ppt.")
 
 async def generate_spreadsheet(file):
     handler = SpreadsheetHandler(file)
@@ -61,12 +109,13 @@ async def generate_spreadsheet(file):
 
     handler.write_to_sheet(responses)
 
-    # PPT Agent's step
+    # PPT Agent's step 
     # data = pack_data(qlist, responses)
     # gen_ppt(data)
 
-def gen_ppt(content):
-    pgen = PresentationGenerator("output")
+
+def gen_ppt(content, filename):
+    pgen = PresentationGenerator(filename.rstrip(".xlsx"))
     for i in content:
         pgen.add_slide(1, 20)
         pgen.add_content(i)

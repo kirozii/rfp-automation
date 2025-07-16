@@ -8,7 +8,7 @@ class PresentationGenerator:
         Args:
             filename: Name of the output file excluding the extension.
         """
-        self._path = "app/templates/" + filename + ".pptx"
+        self._path = "ppts/" + filename + ".pptx"
         self._presentation = Presentation("app/templates/cover_page.pptx")
         self._slide_number = 1
 
