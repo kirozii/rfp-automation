@@ -5,7 +5,7 @@ import logo from './assets/mphasis_logo.png'
 import './index.css'
 
 function App() {
-    const { status, uploadedFiles, handleFileUpload, handleFileDownload, handleGenerateAnswers, handleGeneratePPT, handleDownloadPPT } = useFileManagement();
+    const { status, uploadedFiles, fileProcessingStatus, handleFileUpload, handleFileDownload, handleGenerateAnswers, handleGeneratePPT, handleDownloadPPT } = useFileManagement();
     return (
         <div className="flex flex-col items-center justify-start min-h-screen bg-gray-100">
             <img src={logo} className="absolute top-5 left-5 w-50" />
@@ -17,7 +17,7 @@ function App() {
                 <FileUploader status={status} onDrop={handleFileUpload} />
             </div>
             <div className="flex justify-center items-center w-3/4 ">
-                <FileList uploadedFiles={uploadedFiles} handleFileDownload={handleFileDownload} generateAnswers={handleGenerateAnswers} handleGeneratePPT={handleGeneratePPT} handleDownloadPPT={handleDownloadPPT} />
+                <FileList uploadedFiles={uploadedFiles} fileProcessingStatus={fileProcessingStatus} handleFileDownload={handleFileDownload} generateAnswers={handleGenerateAnswers} handleGeneratePPT={handleGeneratePPT} handleDownloadPPT={handleDownloadPPT} />
             </div>
         </div>
     );

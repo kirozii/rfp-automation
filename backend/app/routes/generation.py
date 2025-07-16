@@ -102,7 +102,6 @@ async def generate_spreadsheet(file):
     llm = Generator()
 
     questions = handler.extract_questions()
-    qlist = questions["Questions"].to_list()
 
     tasks = [llm.generate_response(question) for question in questions['Questions']]
     responses = await asyncio.gather(*tasks) # list of dicts {"Answer": ans}
