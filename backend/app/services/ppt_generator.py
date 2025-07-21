@@ -1,4 +1,5 @@
 from pptx import Presentation
+from pptx.util import Pt
 
 class PresentationGenerator:
     def __init__(self, filename: str) -> None:
@@ -39,5 +40,14 @@ class PresentationGenerator:
         Args:
             content: Dict-like object
         """
+
         self._curr_slide.placeholders[0].text = content["Title"]
+
+
         self._curr_slide.placeholders[1].text = content["Content"]
+        content_frame = self._curr_slide.placeholders[1].text_frame
+        content_frame.clear()
+        paragraph = content_frame.paragraphs[0]
+        run = paragraph.add_run()
+        run.text = content["Content"]
+        run.font.size = Pt(20)

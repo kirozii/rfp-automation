@@ -27,7 +27,7 @@ class Generator:
             Dictionary in the format {"Answer": response}
         """
         messages = [
-            SystemMessage(content="You are a technical assistant. Provide a concise answer. Aim for 150-200 words."),
+            SystemMessage(content="You are a technical assistant. Provide a concise answer. Aim for 3 points, around 3 lines each. Do not use any bold/italics."),
         #     HumanMessage(content=f"""
         #         Question: {question}.
         #         Structure your response as follows:
@@ -41,6 +41,9 @@ class Generator:
         ]
         print("LLM: Generating response for question: " + question)
         response = await self._model.ainvoke(messages)
+        print(response)
+        response.content = response.content.replace("\n\n", "\n")
+        print(response.content)
         return self._parse_responses(response.content)
 
     def _parse_responses(self, text) -> Dict:

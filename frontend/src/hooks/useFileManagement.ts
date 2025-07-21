@@ -1,18 +1,12 @@
 import { useCallback, useState, useEffect } from "react";
 import { uploadFile, downloadFile, getUploadedFiles, generateAnswers, generatePPT, downloadPPT } from "@/services/FileService";
+import type { fileStatus, FileProcessingState } from "../types/types.ts"
 
-type FileProcessingState = 'idle' | 'generating_spreadsheet' | 'generating_ppt';
 type uploadStatus = 'uploading' | 'error' | 'success' | 'idle';
-
-interface fileStore {
-    name: string,
-    generated: boolean
-    pptGenerated: boolean
-}
 
 interface UseFileUploadReturn {
     status: uploadStatus;
-    uploadedFiles: fileStore[],
+    uploadedFiles: fileStatus[],
     fileProcessingStatus: Record<string, FileProcessingState>;
     handleFileUpload: (acceptedFile: File[]) => Promise<void>;
     handleFileDownload: (filename: string) => void;
@@ -23,7 +17,7 @@ interface UseFileUploadReturn {
 
 const useFileManagement = (): UseFileUploadReturn => {
     const [status, setStatus] = useState<uploadStatus>('idle');
-    const [uploadedFiles, setUploadedFiles] = useState<fileStore[]>([]);
+    const [uploadedFiles, setUploadedFiles] = useState<fileStatus[]>([]);
     const [fileProcessingStatus, setFileProcessingStatus] = useState<Record<string, FileProcessingState>>({});
 
     const handleFileUpload = useCallback(async (acceptedFile: File[]) => {

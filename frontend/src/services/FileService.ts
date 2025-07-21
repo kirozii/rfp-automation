@@ -1,14 +1,9 @@
 import axios from 'axios';
 import { API_BASE_URL } from '../config/constants'
+import type { fileStatus } from '@/types/types';
 
 interface UploadResponse {
     message: string
-}
-
-interface fileStore {
-    name: string,
-    generated: boolean,
-    pptGenerated: boolean
 }
 
 export const uploadFile = async (file: File): Promise<UploadResponse> => {
@@ -23,7 +18,7 @@ export const uploadFile = async (file: File): Promise<UploadResponse> => {
     return response.data;
 };
 
-export const getUploadedFiles = async (): Promise<fileStore[]> => {
+export const getUploadedFiles = async (): Promise<fileStatus[]> => {
     const response = await axios.get(`${API_BASE_URL}/files`);
     console.log(response.data)
     return response.data;
