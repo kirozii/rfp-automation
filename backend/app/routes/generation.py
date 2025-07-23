@@ -116,7 +116,7 @@ async def generate_spreadsheet(file):
 def gen_ppt(content, filename):
     pgen = PresentationGenerator(filename.rstrip(".xlsx"))
     for i in content:
-        pgen.add_slide(1, 20)
+        pgen.add_slide(1, 0)
         pgen.add_content(i)
         pgen.save_presentation()
 
