@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect } from "react";
-import { uploadFile, downloadFile, getUploadedFiles, generateAnswers, generatePPT, downloadPPT } from "@/services/FileService";
+import { uploadFile, downloadFile, getUploadedFiles, generateAnswers, generatePPT, downloadPPT, reviseFile } from "@/services/FileService";
 import type { fileStatus, FileProcessingState } from "../types/types.ts"
 
 type uploadStatus = 'uploading' | 'error' | 'success' | 'idle';
@@ -10,6 +10,7 @@ interface UseFileUploadReturn {
     fileProcessingStatus: Record<string, FileProcessingState>;
     handleFileUpload: (acceptedFile: File[]) => Promise<void>;
     handleFileDownload: (filename: string) => void;
+    handleReviseFile: (filename: string, file: File) => Promise<void>;
     handleGenerateAnswers: (filename: string) => Promise<void>;
     handleGeneratePPT: (filename: string) => Promise<void>;
     handleDownloadPPT: (filename: string) => void;
@@ -39,7 +40,7 @@ const useFileManagement = (): UseFileUploadReturn => {
 
     }, []);
 
-    const refreshFiles = async () => {
+    const refreshFiles = useCallback(async () => {
         try {
             const fetchedFiles = await getUploadedFiles();
             setUploadedFiles(fetchedFiles);
@@ -65,10 +66,24 @@ const useFileManagement = (): UseFileUploadReturn => {
             console.error("FETCH: Error while fetching file: ", err);
             setUploadedFiles([]);
         }
-    }
+    }, []);
 
     const handleFileDownload = (filename: string) => {
         downloadFile(filename);
+    }
+
+    const handleReviseFile = async (filename: string, file: File) => {
+        setFileProcessingStatus(prev => ({ ...prev, [filename]: 'revising_file' }));
+        try {
+            await reviseFile(filename, file);
+            alert("Uploaded revised file successfully")
+            await refreshFiles();
+        } catch (err) {
+            console.error("REVISE: Error while revising file: ", err)
+            alert("Error while revising. Check console.")
+        } finally {
+            setFileProcessingStatus(prev => ({ ...prev, [filename]: 'idle' }));
+        }
     }
 
     const handleDownloadPPT = (filename: string) => {
@@ -111,7 +126,7 @@ const useFileManagement = (): UseFileUploadReturn => {
         }
     }
 
-    useEffect(() => { refreshFiles(); }, []);
+    useEffect(() => { refreshFiles(); }, [refreshFiles]);
 
     return {
         status,
@@ -119,6 +134,7 @@ const useFileManagement = (): UseFileUploadReturn => {
         fileProcessingStatus,
         handleFileUpload,
         handleFileDownload,
+        handleReviseFile,
         handleGenerateAnswers,
         handleGeneratePPT,
         handleDownloadPPT

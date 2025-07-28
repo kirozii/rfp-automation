@@ -1,9 +1,9 @@
 from langchain_core.messages import HumanMessage, SystemMessage
 from pydantic import SecretStr
-import re
 from ..core.config import settings
 from typing import Dict
 from langchain_google_genai import ChatGoogleGenerativeAI
+from ..schemas.powerpoint_response import Slide
 
 class Generator:
     def __init__(self):
@@ -14,7 +14,8 @@ class Generator:
         if not key:
             raise ValueError("Gemini API key not found.")
 
-        self._model = ChatGoogleGenerativeAI(model="gemini-2.5-flash", api_key=key)
+        self._model = ChatGoogleGenerativeAI(model="gemini-2.0-flash-lite", api_key=key)
+        self._structured_model = self._model.with_structured_output(Slide)
 
     async def generate_response(self, question: str) -> Dict:
         """

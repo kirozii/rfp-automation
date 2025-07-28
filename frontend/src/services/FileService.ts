@@ -35,6 +35,18 @@ export const downloadFile = (filename: string): void => {
     document.body.removeChild(link);
 }
 
+export const reviseFile = async (filename: string, file: File): Promise<UploadResponse> => {
+    const formData = new FormData();
+    formData.append('file', file)
+
+    const response = await axios.post(`${API_BASE_URL}/files/revise/${filename}`, formData, {
+        headers: {
+            'Content-type': 'multipart/form-data',
+        }
+    });
+    return response.data;
+}
+
 export const downloadPPT = (filename: string): void => {
     console.log("DOWNLOAD: we are downloading the file: ", filename);
     const downloadURL = `${API_BASE_URL}/files/downloadppt/${filename}`;

@@ -31,6 +31,7 @@ class PresentationGenerator:
         """
         Saves the presentation to the output filename.
         """
+
         self._presentation.save(self._path)
 
     def add_content(self, content):

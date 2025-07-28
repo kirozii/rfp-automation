@@ -7,12 +7,13 @@ interface FileListProps {
     fileProcessingStatus: Record<string, FileProcessingState>;
     handleFileDownload: (fileName: string) => void;
     generateAnswers: (fileName: string) => Promise<void>;
+    handleReviseFile: (filename: string, file: File) => Promise<void>;
     handleDownloadPPT: (filename: string) => void;
     handleGeneratePPT: (filename: string) => Promise<void>;
 }
 
 
-const FileList: React.FC<FileListProps> = ({ uploadedFiles, fileProcessingStatus, handleFileDownload, generateAnswers, handleDownloadPPT, handleGeneratePPT }) => {
+const FileList: React.FC<FileListProps> = ({ uploadedFiles, fileProcessingStatus, handleFileDownload, handleReviseFile, generateAnswers, handleDownloadPPT, handleGeneratePPT }) => {
     return (
         uploadedFiles.length > 0 && (
             <div className={styles.listContainer}>
@@ -22,7 +23,7 @@ const FileList: React.FC<FileListProps> = ({ uploadedFiles, fileProcessingStatus
                         return (
                             <li key={file.name} className={styles.li}>
                                 {file.name}
-                                <ButtonArray file={file} fileProcessingStatus={fileProcessingStatus} handleFileDownload={handleFileDownload} generateAnswers={generateAnswers} handleDownloadPPT={handleDownloadPPT} handleGeneratePPT={handleGeneratePPT} />
+                                <ButtonArray file={file} fileProcessingStatus={fileProcessingStatus} handleFileDownload={handleFileDownload} handleReviseFile={handleReviseFile} generateAnswers={generateAnswers} handleDownloadPPT={handleDownloadPPT} handleGeneratePPT={handleGeneratePPT} />
                             </li>
                         )
                     })}
