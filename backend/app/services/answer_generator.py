@@ -1,5 +1,5 @@
 from langchain_core.messages import HumanMessage, SystemMessage
-from openai import AzureOpenAI
+from openai import AsyncAzureOpenAI
 import PyPDF2
 import fitz
 import os
@@ -21,7 +21,7 @@ class Generator:
         if not endpoint:
             raise ValueError("Azure OpenAI endpoint not found.")
         self._model = "gpt-4o-mini"
-        self._client = AzureOpenAI(
+        self._client = AsyncAzureOpenAI(
             api_key=key.get_secret_value(),
             api_version="2025-01-01-preview",
             azure_endpoint=endpoint.get_secret_value(),
@@ -124,17 +124,19 @@ class Generator:
         {self.knowledge}
         
         Question: {question}
+
+        ######
+        Use a maximum of 4 points with 3 lines each.
         Answer:"""
     
-        response = self._client.chat.completions.create(
+        print("LLM: Generating response for question: " + question)
+        response = await self._client.chat.completions.create(
             model=self._model,
             messages=[
                 {"role": "user", "content": prompt}
             ],
             temperature=0.2
         )
-
-        print("LLM: Generating response for question: " + question)
         content = response.choices[0].message.content.strip()
         content = content.replace("\n\n", "\n")
         print(content)
