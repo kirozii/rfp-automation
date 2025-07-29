@@ -1,4 +1,5 @@
 from langchain_core.messages import HumanMessage, SystemMessage
+import PyPDF2
 from pydantic import SecretStr
 from ..core.config import settings
 from typing import Dict
@@ -17,6 +18,21 @@ class Generator:
         self._model = ChatGoogleGenerativeAI(model="gemini-2.0-flash-lite", api_key=key)
         self._structured_model = self._model.with_structured_output(Slide)
 
+    def read_pdf(self, pdf_path):
+        text = ""
+        try:
+            with open(pdf_path, 'rb') as file:
+                reader = PyPDF2.PdfReader(file)
+                num_pages = len(reader.pages)
+                for page_num in range(num_pages):
+                    page = reader.pages[page_num]
+                    text += page.extract_text() + "\n"
+        except FileNotFoundError:
+            print(f"Error: The file '{pdf_path}' was not found.")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+        return text
+
     async def generate_response(self, question: str) -> Dict:
         """
         Generate a response to a given question.
@@ -27,18 +43,16 @@ class Generator:
         Returns:
             Dictionary in the format {"Answer": response}
         """
+        filename = "knowledge/reference.pdf"
+        file_content = self.read_pdf(filename)
+        print(file_content)
         messages = [
-            SystemMessage(content="You are a technical assistant. Provide a concise answer. Aim for 3 points, around 3 lines each. Do not use any bold/italics."),
-        #     HumanMessage(content=f"""
-        #         Question: {question}.
-        #         Structure your response as follows:
-        #
-        #         Answer: [concise answer]
-        #         Solution: [step-by-step solution]
-        #         Implementation: [code if applicable] 
-        #         TechStack: [comma-seperated technologies]
-        #     """)
-            HumanMessage(content=question)
+            SystemMessage(content="You are a technical assistant. Provide a concise answer and nothing else. Use the document as reference. Aim for 3 points, around 3 lines each. Do not use any bold/italics."),
+            HumanMessage(content=f"""
+                Document: {file_content}
+                #######
+                Question: {question}
+            """)
         ]
         print("LLM: Generating response for question: " + question)
         response = await self._model.ainvoke(messages)
