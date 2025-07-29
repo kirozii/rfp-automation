@@ -7,7 +7,6 @@ from pydantic import SecretStr
 from ..core.config import settings
 from typing import Dict
 from langchain_google_genai import ChatGoogleGenerativeAI
-from ..schemas.powerpoint_response import Slide
 
 class Generator:
     def __init__(self):
