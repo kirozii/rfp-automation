@@ -48,6 +48,26 @@ class Generator:
         self.knowledge = content
         #self._model = ChatGoogleGenerativeAI(model="gemini-2.0-flash-lite", api_key=key)
         #self._structured_model = self._model.with_structured_output(Slide)
+    async def rewrite_with_mphasis(self, question, answer):
+        prompt = f"""
+        Contextualize the answer and make sure there is no markdown, and a maximum of 5 points with 3 lines each are present. If the question is like "Your way of xyz", or "How would you handle it" rewrite it to sound like Mphasis is writing it. Do not use it for definitions etc, make sure the answer is contextualized and makes sense with the question.
+        Return nothing but the answer.
+        Response:
+        Question:
+        \"\"\"{question}\"\"\"
+
+        Answer:
+        \"\"\"{answer}\"\"\"
+
+        Rewritten answer:
+        """
+        response = await self._client.chat.completions.create(
+            model=self._model,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.4
+        )
+        return response.choices[0].message.content.strip()
+
     def load_pdf_text(self, file_path):
         try:
             doc = fitz.open(file_path)
@@ -137,8 +157,9 @@ class Generator:
             temperature=0.2
         )
         content = response.choices[0].message.content.strip()
-        content = content.replace("\n\n", "\n")
         print(content)
+        content = await self.rewrite_with_mphasis(question, content)
+        content = content.replace("\n\n", "\n")
         return {"Answer": content}
         print("LLM: Generating response for question: " + question)
         response = await self._model.ainvoke(messages)
