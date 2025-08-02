@@ -1,4 +1,5 @@
 from pptx import Presentation
+from pptx.util import Pt
 
 class PresentationGenerator:
     def __init__(self, filename: str) -> None:
@@ -8,7 +9,7 @@ class PresentationGenerator:
         Args:
             filename: Name of the output file excluding the extension.
         """
-        self._path = "app/templates/" + filename + ".pptx"
+        self._path = "ppts/" + filename + ".pptx"
         self._presentation = Presentation("app/templates/cover_page.pptx")
         self._slide_number = 1
 
@@ -30,6 +31,7 @@ class PresentationGenerator:
         """
         Saves the presentation to the output filename.
         """
+
         self._presentation.save(self._path)
 
     def add_content(self, content):
@@ -39,5 +41,14 @@ class PresentationGenerator:
         Args:
             content: Dict-like object
         """
+
         self._curr_slide.placeholders[0].text = content["Title"]
+
+
         self._curr_slide.placeholders[1].text = content["Content"]
+        content_frame = self._curr_slide.placeholders[1].text_frame
+        content_frame.clear()
+        paragraph = content_frame.paragraphs[0]
+        run = paragraph.add_run()
+        run.text = content["Content"]
+        run.font.size = Pt(20)
