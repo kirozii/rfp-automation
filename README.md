@@ -8,11 +8,13 @@ Automating RFP generation using AI agents.
 
 Navigate to /backend.
 
-Set the variable GEMINI_API_KEY in backend/.env
+Set the variables AZURE_OPENAI_KEY and AZURE_OPENAI_ENDPOINT in backend/.env
 
 Run `pip install -r requirements.txt` to install backend dependencies.
 
-Add cover_page.pptx to /app/templates.
+Add cover_page.pptx to /app/templates. (not required if youre not generating ppts)
+
+Populate /knowledge with any relevant knowledge documents (PDF, PPTX)
 
 Now run `py main.py` in /backend to run the backend.
 
