@@ -32,7 +32,6 @@ class Generator:
     
         if not supported_files:
             print(" No supported files found.")
-            exit()
     
         for file_path in supported_files:
             print(f"\n📄 File: {file_path}")
