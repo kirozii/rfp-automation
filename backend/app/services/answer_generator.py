@@ -32,7 +32,6 @@ class Generator:
     
         if not supported_files:
             print(" No supported files found.")
-            exit()
     
         for file_path in supported_files:
             print(f"\n📄 File: {file_path}")
@@ -149,6 +148,7 @@ class Generator:
         Answer:"""
     
         print("LLM: Generating response for question: " + question)
+        print("API Key:", self._client.api_key)
         response = await self._client.chat.completions.create(
             model=self._model,
             messages=[
