@@ -5,11 +5,11 @@ import ButtonArray from "../ButtonArray/ButtonArray.tsx"
 interface FileListProps {
     uploadedFiles: fileStatus[];
     fileProcessingStatus: Record<string, FileProcessingState>;
-    handleFileDownload: (fileName: string) => void;
-    generateAnswers: (fileName: string) => Promise<void>;
-    handleReviseFile: (filename: string, file: File) => Promise<void>;
-    handleDownloadPPT: (filename: string) => void;
-    handleGeneratePPT: (filename: string) => Promise<void>;
+    handleFileDownload: (rfpId: number, fileName: string) => void;
+    generateAnswers: (rfpId: number) => Promise<void>;
+    handleReviseFile: (rfpId: number, file: File) => Promise<void>;
+    handleDownloadPPT: (rfpId: number, filename: string) => void;
+    handleGeneratePPT: (rfpId: number) => Promise<void>;
 }
 
 
@@ -21,8 +21,11 @@ const FileList: React.FC<FileListProps> = ({ uploadedFiles, fileProcessingStatus
                 <ul className={styles.ul}>
                     {uploadedFiles.map((file: fileStatus) => {
                         return (
-                            <li key={file.name} className={styles.li}>
-                                {file.name}
+                            <li key={file.rfp_id} className={styles.li}>
+                                <div className={styles.container}>
+                                    <span className={styles.id}>ID: {file.rfp_id}</span>
+                                    <span className={styles.filename}>{file.filename}</span>
+                                </div>
                                 <ButtonArray file={file} fileProcessingStatus={fileProcessingStatus} handleFileDownload={handleFileDownload} handleReviseFile={handleReviseFile} generateAnswers={generateAnswers} handleDownloadPPT={handleDownloadPPT} handleGeneratePPT={handleGeneratePPT} />
                             </li>
                         )

@@ -16,7 +16,7 @@ function App() {
             <div className="mt-10 flex justify-center items-center w-full">
                 <FileUploader status={status} onDrop={handleFileUpload} />
             </div>
-            <div className="flex justify-center items-center w-3/4 ">
+            <div className="flex justify-center items-center w-full ">
                 <FileList uploadedFiles={uploadedFiles} fileProcessingStatus={fileProcessingStatus} handleFileDownload={handleFileDownload} handleReviseFile={handleReviseFile} generateAnswers={handleGenerateAnswers} handleGeneratePPT={handleGeneratePPT} handleDownloadPPT={handleDownloadPPT} />
             </div>
         </div>

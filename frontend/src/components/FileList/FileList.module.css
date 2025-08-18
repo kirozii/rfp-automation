@@ -33,7 +33,21 @@
   word-break: break-all;
 }
 
+.filename {
+  font-weight: 600;
+  color: #333;
+}
+
+.id {
+  color: #888;
+}
+
 .li:last-child {
   margin-bottom: -8px;
   border-bottom: none;
+}
+
+.container {
+  display: flex;
+  gap: 12px;
 }
