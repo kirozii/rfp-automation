@@ -2,13 +2,15 @@
 
 Automating RFP generation using AI agents.
 
+NOTE: SQL ODBC Driver 18 is required for anyone attempting to run with the connection string I have provided
+
 ## Getting started
 
 ### Backend
 
 Navigate to /backend.
 
-Set the variable GEMINI_API_KEY in backend/.env
+Ask me for backend/.env variables. (you can see which ones to add in backend/app/core/config.py)
 
 Run `pip install -r requirements.txt` to install backend dependencies.
 
