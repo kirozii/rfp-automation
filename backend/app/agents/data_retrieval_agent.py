@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-import asyncio
+from ..database import async_session_factory
 import os
 import fitz
 from typing import Dict, List
@@ -13,24 +13,20 @@ from ..crud import questions
 
 logger = logging.getLogger("rfpai.agents.data_retrieval_agent")
 
+
 class DataRetrievalAgent:
     """
     Agent responsible for retrieving relevant data via RAG and KM.
     """
-    db: Session
 
-    def __init__(self, db: Session):
+    def __init__(self):
         """
         Initializes an instance of the agent.
-
-        Args:
-            db (Session): An SQLAlchemy database session
         """
-        self.db = db
         key = SecretStr(settings.AZURE_INFERENCE_CREDENTIAL)
         if not key:
             raise ValueError("Azure AI Foundry key not found.")
-        
+
         endpoint = SecretStr(settings.AZURE_INFERENCE_ENDPOINT)
         if not endpoint:
             raise ValueError("Azure AI Foundry endpoint not found.")
@@ -50,15 +46,22 @@ class DataRetrievalAgent:
         NOTE: This function will draft a complete response and save it in context. Need to improve the RAG system first.
         """
         logger.info("Starting data retrieval for question_id: %s", question_id)
-        question = questions.get_question(self.db, question_id)
-        if question is None:
-            logger.error("Could not find question with question_id: %s", question_id)
-            return
-        questions.update_question_status(self.db, question_id, QuestionStatus.PENDING_DATA_RETRIEVAL)
-        self.knowledge = self._get_context()
-        response = await self.generate_response(question.question_text)
-        questions.update_question_context(self.db, question_id, context=response["Answer"])
-        logger.info("Data retrieval completed for question_id: %s", question_id)
+        async with async_session_factory() as session:
+            question = await questions.get_question(session, question_id)
+            if question is None:
+                logger.error(
+                    "Could not find question with question_id: %s", question_id
+                )
+                return
+            await questions.update_question_status(
+                session, question_id, QuestionStatus.PENDING_DATA_RETRIEVAL
+            )
+            self.knowledge = self._get_context()
+            response = await self.generate_response(question.question_text)
+            await questions.update_question_context(
+                session, question_id, new_context=response["Answer"]
+            )
+            logger.info("Data retrieval completed for question_id: %s", question_id)
 
     async def generate_response(self, question: str) -> Dict:
         """
@@ -80,14 +83,12 @@ class DataRetrievalAgent:
         ######
         Use a maximum of 4 points with 3 lines each.
         Answer:"""
-    
+
         logger.info("LLM: Generating response for question: %s", question)
         response = await self._client.chat.completions.create(
             model=self._model,
-            messages=[
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.2
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.2,
         )
         content = response.choices[0].message.content.strip()
         logger.info("LLM: Generated response for question: %s", question)
@@ -96,15 +97,19 @@ class DataRetrievalAgent:
 
     def _get_context(self):
         """
+        **WILL NOT WORK WITH MORE THAN A FEW KNOWLEDGE FILES**
         Retrieves the context of the question.
 
-        NOTE: Currently it just reads everything in /knowledge and returns all the text. Will change once vector db is implemented.
+        NOTE: This was implemented in a few hours as a temporary fix. NOT SCALABLE + WILL CRASH
+        Should be prioritized to setup a vector store as a better temporary measure or register the app on Azure
+        so that it can access Copilot/KM/Sharepoint files w/ Azure AI Search. Currently it just reads everything
+        in /knowledge and returns all the text.
         """
         files = self.get_all_supported_files("knowledge/")
         context = ""
         for file in files:
             tempcontent = self._load_file_text(file)
-    
+
             if not tempcontent or "[ERROR]" in tempcontent:
                 print(f"⚠️ Could not load content from: {file}")
                 continue
@@ -113,8 +118,12 @@ class DataRetrievalAgent:
 
     def _load_file_text(self, file_path):
         """
+        **WILL NOT WORK WITH MORE THAN A FEW KNOWLEDGE FILES**
         Loads the text from the file.
 
+        NOTE: This was implemented in a few hours as a temporary fix. NOT SCALABLE + WILL CRASH
+        Should be prioritized to setup a vector store as a better temporary measure or register the app on Azure
+        so that it can access Copilot/KM/Sharepoint files w/ Azure AI Search
         Args:
             file_path (str): The path to the file.
 
@@ -130,9 +139,16 @@ class DataRetrievalAgent:
             return self._load_pptx_text(file_path)
         return None
 
-    def get_all_supported_files(self, root_folder, extensions=[".pdf", ".txt", ".ppt", ".pptx"]):
+    def get_all_supported_files(
+        self, root_folder, extensions=[".pdf", ".txt", ".ppt", ".pptx"]
+    ):
         """
+        **WILL NOT WORK WITH MORE THAN A FEW KNOWLEDGE FILES**
         Gets all the files in the root folder and its subfolders with the given extensions.
+
+        NOTE: This was implemented in a few hours as a temporary fix. NOT SCALABLE + WILL CRASH
+        Should be prioritized to setup a vector store as a better temporary measure or register the app on Azure
+        so that it can access Copilot/KM/Sharepoint files w/ Azure AI Search
 
         Args:
             root_folder (str): The root folder to search for files.
@@ -154,14 +170,14 @@ class DataRetrievalAgent:
             return "\n".join(page.get_text() for page in doc)
         except Exception as e:
             return f"[PDF READ ERROR]: {e}"
-    
+
     def _load_txt_text(self, file_path):
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 return f.read()
         except Exception as e:
             return f"[TEXT READ ERROR]: {e}"
-    
+
     def _load_pptx_text(self, file_path):
         try:
             prs = Presentation(file_path)

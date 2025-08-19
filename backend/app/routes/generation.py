@@ -7,7 +7,6 @@ from ..agents.data_retrieval_agent import DataRetrievalAgent
 import pandas as pd
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
-from ..database import get_db
 import logging
 import os
 
@@ -19,8 +18,9 @@ router = APIRouter(
     prefix="/files",
 )
 
+
 @router.post("/uploadfile")
-async def create_upload_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def create_upload_file(file: UploadFile = File(...)):
     if file.filename:
         if not os.path.isdir("files"):
             os.mkdir("files")
@@ -47,7 +47,7 @@ async def create_upload_file(file: UploadFile = File(...), db: Session = Depends
             await file.close()
 
         logger.info("Created file: %s with rfp_id: %s", file.filename, rfp_id)
-        return {'message': "File uploaded", 'rfp_id': rfp_id}
+        return {"message": "File uploaded", "rfp_id": rfp_id}
 
 
 @router.post("/revise/{filename}")
@@ -57,7 +57,9 @@ async def update_answers(filename, file: UploadFile = File(...)):
     filepointer = False
 
     if not filepointer:
-        raise HTTPException(status_code=404, detail="Could not locate original file in database.")
+        raise HTTPException(
+            status_code=404, detail="Could not locate original file in database."
+        )
 
     if not os.path.isdir("revisedfiles"):
         os.mkdir("revisedfiles")
@@ -72,9 +74,9 @@ async def update_answers(filename, file: UploadFile = File(...)):
         print("REVISE: File saved")
         await file.close()
 
-    if (validate(filename)):
-        filepointer['revised'] = True
-        return {'message': "Revision saved"}
+    if validate(filename):
+        filepointer["revised"] = True
+        return {"message": "Revision saved"}
     else:
         if os.path.exists(file_location):
             os.remove(file_location)
@@ -82,6 +84,7 @@ async def update_answers(filename, file: UploadFile = File(...)):
             status_code=400,
             detail="Uploaded file is invalid: It must have 'Questions' and 'Answer' columns, or is malformed/empty.",
         )
+
 
 @router.post("/generate/{id}")
 async def generate_answers(id: int, db: Session = Depends(get_db)):
@@ -93,41 +96,53 @@ async def generate_answers(id: int, db: Session = Depends(get_db)):
     await question_processing_agent.process(id)
     try:
         rfp_questions = questions.get_questions_by_rfp(db, id)
-        
+
         if not rfp_questions:
             logger.info(f"No questions found for RFP ID {id}")
-            return {'message': f'No questions found for RFP ID {id}!'}
-        
+            return {"message": f"No questions found for RFP ID {id}!"}
+
         logger.info(f"Found {len(rfp_questions)} questions for RFP ID {id}")
-        
+
         # Initialize agents
         data_retrieval_agent = DataRetrievalAgent(db)
         contextualization_agent = DataContextualizationAgent(db)
-        
+
         # Process each question through both agents
         for question in rfp_questions:
             question_id = question.question_id
-            
+
             logger.info(f"Processing question ID {question_id} for RFP ID {id}")
 
             process_question(question_id, data_retrieval_agent, contextualization_agent)
-        
+
         rfps.update_rfp_status(db, id, RFPStatus.PENDING_REVIEW)
-        logger.info(f"Completed processing {len(rfp_questions)} questions for RFP ID {id}")
-        return {'message': f'Successfully processed {len(rfp_questions)} questions for RFP ID {id}!'}
-        
+        logger.info(
+            f"Completed processing {len(rfp_questions)} questions for RFP ID {id}"
+        )
+        return {
+            "message": f"Successfully processed {len(rfp_questions)} questions for RFP ID {id}!"
+        }
+
     except Exception as e:
         logger.error(f"Error in generate_answers: {e}")
-        raise HTTPException(status_code=500, detail=f"Error generating answers: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error generating answers: {str(e)}"
+        )
 
-async def process_question(question_id: int, data_retrieval_agent: DataRetrievalAgent, contextualization_agent: DataContextualizationAgent):
+
+async def process_question(
+    question_id: int,
+    data_retrieval_agent: DataRetrievalAgent,
+    contextualization_agent: DataContextualizationAgent,
+):
     # Process through data retrieval agent
     await data_retrieval_agent.process(question_id)
     logger.info(f"Data retrieval completed for question ID {question_id}")
-    
+
     # Process through data contextualization agent
     await contextualization_agent.process(question_id)
     logger.info(f"Data contextualization completed for question ID {question_id}")
+
 
 @router.get("/")
 async def get_uploaded_files(db: Session = Depends(get_db)):
@@ -135,13 +150,14 @@ async def get_uploaded_files(db: Session = Depends(get_db)):
     file_list = []
     for rfp in files:
         rfp_json = {
-            'rfp_id': rfp.rfp_id,
-            'filename': rfp.filename,
-            'uploaded_at': rfp.uploaded_at,
-            'status': rfp.status
+            "rfp_id": rfp.rfp_id,
+            "filename": rfp.filename,
+            "uploaded_at": rfp.uploaded_at,
+            "status": rfp.status,
         }
         file_list.append(rfp_json)
     return file_list
+
 
 @router.get("/download/{rfp_id}")
 async def download_file(rfp_id: int, db: Session = Depends(get_db)):
@@ -152,6 +168,7 @@ async def download_file(rfp_id: int, db: Session = Depends(get_db)):
 
     return FileResponse(path=db_file.storage_path, filename=db_file.filename)
 
+
 @router.get("/downloadppt/{filename}")
 async def download_ppt(filename: str):
     print("PPTDOWN: Downloading ppt for: ", filename)
@@ -161,6 +178,7 @@ async def download_ppt(filename: str):
         raise HTTPException(status_code=404, detail="File not found")
 
     return FileResponse(path=file_path, filename=filename)
+
 
 # @router.post("/generateppt/{filename}")
 # async def generate_ppt(filename: str):
@@ -200,6 +218,7 @@ async def download_ppt(filename: str):
 #     for i in range(len(responses)):
 #         data.append({"Title": qlist[i], "Content": responses[i]["Answer"]})
 #     return data
+
 
 def validate(filename):
     try:

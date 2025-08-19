@@ -3,7 +3,7 @@ import os
 import sys
 
 
-def setup_logging(log_file="logs/app.log"):
+def setup_logger(log_file="logs/app.log"):
     """
     Configures the application's logging to write to both the console and a file.
     The log file is created in a 'logs' directory.

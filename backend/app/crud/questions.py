@@ -92,6 +92,53 @@ async def get_questions_by_rfp(db: AsyncSession, rfp_id: int) -> List[models.Que
     return questions
 
 
+async def update_question_context(
+    db: AsyncSession, question_id: int, new_context: str
+) -> Optional[models.Question]:
+    """
+    Updates the question_context of a Question record.
+
+    Args:
+        db (AsyncSession): The SQLAlchemy database session.
+        question_id (int): The ID of the question to update.
+        new_context (str): The new context to set for the question.
+
+    Returns:
+        Optional[models.Question]: The updated Question ORM object if found, None otherwise.
+
+    Raises:
+        ValueError: If the question with the given ID is not found.
+        Exception: If there's a database error during the update.
+    """
+    db_question = await get_question(db, question_id)
+    if not db_question:
+        logger.warning(
+            f"Attempted to update context for non-existent Question ID={question_id}"
+        )
+        raise ValueError(
+            f"Question with ID {question_id} not found for context update."
+        )
+
+    old_context = db_question.question_context
+    db_question.question_context = new_context
+
+    try:
+        await db.commit()
+        await db.refresh(db_question)
+        logger.info(
+            f"Updated Question ID={question_id} context from "
+            f"'{old_context[:50]}...' to '{new_context[:50]}...'"
+        )
+        return db_question
+    except exc as e:
+        await db.rollback()
+        logger.error(
+            f"Error updating Question ID={question_id} context: {e}",
+            exc_info=True,
+        )
+        raise
+
+
 async def update_question_status(
     db: AsyncSession, question_id: int, new_status: QuestionStatus
 ) -> Optional[models.Question]:

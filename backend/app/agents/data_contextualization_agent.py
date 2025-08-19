@@ -1,31 +1,28 @@
 from sqlalchemy.orm import Session
+from ..database import async_session_factory
 from ..core.config import settings
 from pydantic import SecretStr
 import logging
 from openai import AsyncAzureOpenAI
 from ..models import QuestionStatus
-from ..crud import questions, llm_response
+from ..crud import questions, llm_responses
 
 logger = logging.getLogger("rfpai.agents.data_contextualization_agent")
 
+
 class DataContextualizationAgent:
     """
-    Contextualizes and forms an answer to the provided question. 
+    Contextualizes and forms an answer to the provided question.
     """
-    _db: Session
 
-    def __init__(self, db: Session):
+    def __init__(self):
         """
         Initializes an instance of the agent.
-
-        Args:
-            db (Session): An SQLAlchemy database session
         """
-        self._db = db
         key = SecretStr(settings.AZURE_INFERENCE_CREDENTIAL)
         if not key:
             raise ValueError("Azure AI Foundry key not found.")
-        
+
         endpoint = SecretStr(settings.AZURE_INFERENCE_ENDPOINT)
         if not endpoint:
             raise ValueError("Azure AI Foundry endpoint not found.")
@@ -43,14 +40,31 @@ class DataContextualizationAgent:
         Contextualizes and forms an answer to the question provided.
         """
         logger.info("Starting data contextualization for question_id: %s", question_id)
-        question = questions.get_question(self._db, question_id)
-        if question is None:
-            logger.error("Could not find question with question_id: %s", question_id)
-            return
-        questions.update_question_status(self._db, question_id, QuestionStatus.PENDING_LLM_RESPONSE)
-        response = await self.rewrite_with_mphasis(question.question_text, question.question_context)
-        db_response = llm_response.create_llm_response(self._db, question_id, response, model_id=self._model, retrieved_context=question.question_context)
-        logger.info("Data contextualization completed for question_id: %s with llm_response id: %s", question_id, db_response.response_id)
+        async with async_session_factory() as session:
+            question = await questions.get_question(session, question_id)
+            if question is None:
+                logger.error(
+                    "Could not find question with question_id: %s", question_id
+                )
+                return
+            await questions.update_question_status(
+                session, question_id, QuestionStatus.PENDING_LLM_RESPONSE
+            )
+            response = await self.rewrite_with_mphasis(
+                question.question_text, question.question_context
+            )
+            db_response = await llm_responses.create_llm_response(
+                self._db,
+                question_id,
+                response,
+                model_id=self._model,
+                retrieved_context=question.question_context,
+            )
+            logger.info(
+                "Data contextualization completed for question_id: %s with llm_response id: %s",
+                question_id,
+                db_response.response_id,
+            )
 
     async def rewrite_with_mphasis(self, question, answer):
         prompt = f"""
@@ -68,6 +82,6 @@ class DataContextualizationAgent:
         response = await self._client.chat.completions.create(
             model=self._model,
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.4
+            temperature=0.4,
         )
         return response.choices[0].message.content.strip()
