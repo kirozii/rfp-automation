@@ -125,10 +125,7 @@ async def update_question_context(
     try:
         await db.commit()
         await db.refresh(db_question)
-        logger.info(
-            f"Updated Question ID={question_id} context from "
-            f"'{old_context[:50]}...' to '{new_context[:50]}...'"
-        )
+        logger.info(f"Updated Question ID={question_id} context")
         return db_question
     except exc as e:
         await db.rollback()

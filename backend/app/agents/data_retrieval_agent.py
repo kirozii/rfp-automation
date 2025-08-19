@@ -23,11 +23,12 @@ class DataRetrievalAgent:
         """
         Initializes an instance of the agent.
         """
-        key = SecretStr(settings.AZURE_INFERENCE_CREDENTIAL)
+        self.knowledge = self._get_context()
+        key = SecretStr(settings.AZURE_OPENAI_KEY)
         if not key:
             raise ValueError("Azure AI Foundry key not found.")
 
-        endpoint = SecretStr(settings.AZURE_INFERENCE_ENDPOINT)
+        endpoint = SecretStr(settings.AZURE_OPENAI_ENDPOINT)
         if not endpoint:
             raise ValueError("Azure AI Foundry endpoint not found.")
 
@@ -53,10 +54,6 @@ class DataRetrievalAgent:
                     "Could not find question with question_id: %s", question_id
                 )
                 return
-            await questions.update_question_status(
-                session, question_id, QuestionStatus.PENDING_DATA_RETRIEVAL
-            )
-            self.knowledge = self._get_context()
             response = await self.generate_response(question.question_text)
             await questions.update_question_context(
                 session, question_id, new_context=response["Answer"]
@@ -73,7 +70,7 @@ class DataRetrievalAgent:
         Returns:
             Dictionary in the format {"Answer": response}
         """
-        prompt = f"""You are an assistant who generates answers for users. Answer the following question in around 3 points with around 3 lines each. Do not use any markdown. The document is provided as a reference, if the answer is not found in it use your knowledge to answer it. Do not specify that you did not find the answer in the document. Simply provide the answer.
+        prompt = f"""You are an assistant who generates answers for users. Answer the following question in around 5 points with around 3 lines each. Do not use any markdown. The document is provided as a reference, if the answer is not found in it use your knowledge to answer it. Do not specify that you did not find the answer in the document. Simply provide the answer.
 
         Document:
         {self.knowledge}

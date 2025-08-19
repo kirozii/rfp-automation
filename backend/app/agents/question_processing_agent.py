@@ -42,11 +42,20 @@ class QuestionProcessingAgent:
                 len(question_list),
                 rfp_id,
             )
+            existing_questions = await questions.get_questions_by_rfp(session, rfp_id)
+            if existing_questions:
+                logger.info(
+                    "Skipping extraction: %d questions already exist for rfp_id: %s",
+                    len(existing_questions),
+                    rfp_id,
+                )
+                return
+
             try:
                 for question in question_list:
                     await questions.create_question(session, rfp_id, question)
                     logger.info(
-                        "Successfully question id: %s, with text: %s", rfp_id, question
+                        "Successfully extracted question with text: %s", question
                     )
             except Exception as e:
                 logger.error(

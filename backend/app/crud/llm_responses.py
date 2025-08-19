@@ -94,9 +94,9 @@ async def get_llm_response(
 
 async def get_llm_responses_by_question(
     db: AsyncSession, question_id: int
-) -> List[models.LLMResponse]:
+) -> models.LLMResponse:
     """
-    Retrieves all LLM responses associated with a specific Question.
+    Retrieves the LLM response associated with a specific Question.
 
     Args:
         db (Session): The SQLAlchemy database session.
@@ -108,10 +108,8 @@ async def get_llm_responses_by_question(
     result = await db.execute(
         select(models.LLMResponse).where(models.LLMResponse.question_id == question_id)
     )
-    llm_responses = result.scalars().all()
-    logger.debug(
-        f"Retrieved {len(llm_responses)} LLM responses for Question ID={question_id}."
-    )
+    llm_responses = result.scalars().first()
+    logger.debug(f"Retrieved LLM response for Question ID={question_id}.")
     return llm_responses
 
 

@@ -1,6 +1,7 @@
 from pptx import Presentation
 from pptx.util import Pt
 
+
 class PresentationGenerator:
     def __init__(self, filename: str) -> None:
         """
@@ -21,11 +22,11 @@ class PresentationGenerator:
             master_code: index of the slide master.
             slide_type: index of the slide.
         """
-        self._presentation.slides.add_slide(self._presentation.slide_masters[master_code].slide_layouts[slide_code])
+        self._presentation.slides.add_slide(
+            self._presentation.slide_masters[master_code].slide_layouts[slide_code]
+        )
         self._slide_number += 1
         self._curr_slide = self._presentation.slides[self._slide_number - 1]
-        for i in self._curr_slide.placeholders:
-            print(i.name)
 
     def save_presentation(self):
         """
@@ -43,7 +44,6 @@ class PresentationGenerator:
         """
 
         self._curr_slide.placeholders[0].text = content["Title"]
-
 
         self._curr_slide.placeholders[1].text = content["Content"]
         content_frame = self._curr_slide.placeholders[1].text_frame

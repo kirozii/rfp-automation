@@ -1,4 +1,3 @@
-from sqlalchemy.orm import Session
 from ..database import async_session_factory
 from ..core.config import settings
 from pydantic import SecretStr
@@ -19,11 +18,11 @@ class DataContextualizationAgent:
         """
         Initializes an instance of the agent.
         """
-        key = SecretStr(settings.AZURE_INFERENCE_CREDENTIAL)
+        key = SecretStr(settings.AZURE_OPENAI_KEY)
         if not key:
             raise ValueError("Azure AI Foundry key not found.")
 
-        endpoint = SecretStr(settings.AZURE_INFERENCE_ENDPOINT)
+        endpoint = SecretStr(settings.AZURE_OPENAI_ENDPOINT)
         if not endpoint:
             raise ValueError("Azure AI Foundry endpoint not found.")
 
@@ -47,14 +46,11 @@ class DataContextualizationAgent:
                     "Could not find question with question_id: %s", question_id
                 )
                 return
-            await questions.update_question_status(
-                session, question_id, QuestionStatus.PENDING_LLM_RESPONSE
-            )
             response = await self.rewrite_with_mphasis(
                 question.question_text, question.question_context
             )
             db_response = await llm_responses.create_llm_response(
-                self._db,
+                session,
                 question_id,
                 response,
                 model_id=self._model,
@@ -68,7 +64,7 @@ class DataContextualizationAgent:
 
     async def rewrite_with_mphasis(self, question, answer):
         prompt = f"""
-        Contextualize the answer and make sure there is no markdown, and a maximum of 5 un-numbered points with 3 lines each are present. If the question is like "Your way of xyz", or "How would you handle it" rewrite it to sound like Mphasis is writing it. Do not use it for definitions etc, make sure the answer is contextualized and makes sense with the question.
+        Contextualize the answer and make sure there is no markdown, and a minimum of 4 points and a maximum of 5 un-numbered points with 3 lines each are present. If the question is like "Your way of xyz", or "How would you handle it" rewrite it to sound like Mphasis is writing it. Do not use it for definitions etc, make sure the answer is contextualized and makes sense with the question.
         Return nothing but the answer.
         Response:
         Question:
@@ -84,4 +80,6 @@ class DataContextualizationAgent:
             messages=[{"role": "user", "content": prompt}],
             temperature=0.4,
         )
-        return response.choices[0].message.content.strip()
+        content = response.choices[0].message.content.strip()
+        content = content.replace("\n\n", "\n")
+        return content

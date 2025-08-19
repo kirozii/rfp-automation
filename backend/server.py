@@ -4,9 +4,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import generation
 
+setup_logger()
 app = FastAPI()
 
-setup_logger()
 logger = logging.getLogger(__name__)
 
 origins = [

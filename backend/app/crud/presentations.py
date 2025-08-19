@@ -41,7 +41,7 @@ async def create_presentation(
         await db.commit()
         await db.refresh(db_presentation)
         logger.info(
-            f"Created new Presentation: ID={db_presentation.id} for RFP ID={rfp_id}"
+            f"Created new Presentation: ID={db_presentation.presentation_id} for RFP ID={rfp_id}"
         )
         return db_presentation
     except exc.SQLAlchemyError as e:
@@ -66,7 +66,9 @@ async def get_presentation(
         Optional[models.Presentation]: The Presentation ORM object if found, None otherwise.
     """
     result = await db.execute(
-        select(models.Presentation).where(models.Presentation.id == presentation_id)
+        select(models.Presentation).where(
+            models.Presentation.presentation_id == presentation_id
+        )
     )
     presentation = result.scalar_one_or_none()
     if presentation:

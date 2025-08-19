@@ -128,6 +128,48 @@ async def update_rfp_status(
         raise ValueError(f"RFP with ID {rfp_id} not found for status update.")
 
 
+async def update_storage_path(
+    db: AsyncSession, rfp_id: int, new_storage_path: Optional[str]
+) -> Optional[models.RFP]:
+    """
+    Updates the storage path of an RFP record.
+
+    Args:
+        db (AsyncSession): The SQLAlchemy async database session.
+        rfp_id (int): The ID of the RFP to update.
+        new_storage_path (Optional[str]): The new storage path (e.g., cloud URL).
+
+    Returns:
+        Optional[models.RFP]: The updated RFP ORM object if found, None otherwise.
+    Raises:
+        ValueError: If the RFP with the given ID is not found.
+        Exception: If there's a database error during the update.
+    """
+    db_rfp = await get_rfp(db, rfp_id)
+    if db_rfp:
+        old_path = db_rfp.storage_path
+        db_rfp.storage_path = new_storage_path
+        try:
+            await db.commit()
+            await db.refresh(db_rfp)
+            logger.info(
+                f"Updated RFP ID={rfp_id} storage_path from '{old_path}' to '{new_storage_path}'"
+            )
+            return db_rfp
+        except exc.SQLAlchemyError as e:
+            await db.rollback()
+            logger.error(
+                f"Error updating RFP ID={rfp_id} storage_path to '{new_storage_path}': {e}",
+                exc_info=True,
+            )
+            raise
+    else:
+        logger.warning(
+            f"Attempted to update storage_path for non-existent RFP ID={rfp_id}"
+        )
+        raise ValueError(f"RFP with ID {rfp_id} not found for storage_path update.")
+
+
 async def delete_rfp(db: AsyncSession, rfp_id: int) -> bool:
     """
     Deletes an RFP record by its ID.

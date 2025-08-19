@@ -44,7 +44,7 @@ async def create_evaluation(
         await db.commit()
         await db.refresh(db_evaluation)
         logger.info(
-            f"Created new Evaluation: ID={db_evaluation.id} for LLMResponse ID={response_id}"
+            f"Created new Evaluation: ID={db_evaluation.eval_id} for LLMResponse ID={response_id}"
         )
         return db_evaluation
     except exc.SQLAlchemyError as e:
