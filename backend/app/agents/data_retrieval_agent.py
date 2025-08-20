@@ -86,8 +86,6 @@ class DataRetrievalAgent:
         Answer:
         """
 
-        logger.info(f"prompt: {prompt}")
-
         logger.info("LLM: Generating response for question: %s", question)
         response = await self._client.chat.completions.create(
             model=self._model,
@@ -118,7 +116,6 @@ class DataRetrievalAgent:
                 logger.warning(f"⚠️ Could not load content from: {file}")
                 continue
             logger.info(f"Extracted content from: {file}")
-            logger.info(f"Extracted content: {tempcontent}")
             context += tempcontent + "\n"
         return context
 
