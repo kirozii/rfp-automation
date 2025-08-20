@@ -70,16 +70,23 @@ class DataRetrievalAgent:
         Returns:
             Dictionary in the format {"Answer": response}
         """
-        prompt = f"""You are an assistant who generates answers for users. Answer the following question in around 5 points with around 3 lines each. Do not use any markdown. The document is provided as a reference, if the answer is not found in it use your knowledge to answer it. Do not specify that you did not find the answer in the document. Simply provide the answer.
+        prompt = f"""
+        You are an assistant who generates relevant answers for users. Answer the following question in around 5 points with around 3 lines each.
+        Do not use any markdown. The document is provided as a reference, if the answer is not found in it use your knowledge to answer it.
+        Do not specify that you did not find the answer in the document. Simply provide the answer.
 
         Document:
         {self.knowledge}
-        
+
         Question: {question}
 
         ######
         Use a maximum of 4 points with 3 lines each.
-        Answer:"""
+
+        Answer:
+        """
+
+        logger.info(f"prompt: {prompt}")
 
         logger.info("LLM: Generating response for question: %s", question)
         response = await self._client.chat.completions.create(
@@ -108,8 +115,10 @@ class DataRetrievalAgent:
             tempcontent = self._load_file_text(file)
 
             if not tempcontent or "[ERROR]" in tempcontent:
-                print(f"⚠️ Could not load content from: {file}")
+                logger.warning(f"⚠️ Could not load content from: {file}")
                 continue
+            logger.info(f"Extracted content from: {file}")
+            logger.info(f"Extracted content: {tempcontent}")
             context += tempcontent + "\n"
         return context
 

@@ -64,14 +64,14 @@ class DataContextualizationAgent:
 
     async def rewrite_with_mphasis(self, question, answer):
         prompt = f"""
-        Contextualize the answer and make sure there is no markdown, and a minimum of 4 points and a maximum of 5 un-numbered points with 3 lines each are present. If the question is like "Your way of xyz", or "How would you handle it" rewrite it to sound like Mphasis is writing it. Do not use it for definitions etc, make sure the answer is contextualized and makes sense with the question.
-        Return nothing but the answer.
-        Response:
-        Question:
-        \"\"\"{question}\"\"\"
+        Contextualize the answer and make sure there is no markdown, and a minimum of 4 points and a maximum of 5 points with 3 lines each are present.
+        If the question is like "Your way of xyz", or "How would you handle it" rewrite it to sound like Mphasis is writing it.
+        Do not use it for definitions etc, make sure the answer is contextualized and makes sense with the question.
 
-        Answer:
-        \"\"\"{answer}\"\"\"
+        Return nothing but the answer.
+
+        Question: \"\"\"{question}\"\"\"
+        Answer: \"\"\"{answer}\"\"\"
 
         Rewritten answer:
         """
