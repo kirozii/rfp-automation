@@ -2,8 +2,6 @@
 
 Automating RFP generation using AI agents.
 
-## Getting started
-
 ## Getting Started
 
 ### Backend
