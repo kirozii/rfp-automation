@@ -4,24 +4,55 @@ Automating RFP generation using AI agents.
 
 ## Getting started
 
+## Getting Started
+
 ### Backend
 
-Navigate to /backend.
+1. **Navigate to the backend directory:**
+   ```
+   cd backend
+   ```
 
-Set the variables AZURE_OPENAI_KEY and AZURE_OPENAI_ENDPOINT in backend/.env
+2. **Set up environment variables**  
+   Create a `.env` file in `backend/` with:
+   ```
+   AZURE_OPENAI_KEY=your-azure-openai-key
+   AZURE_OPENAI_ENDPOINT=your-azure-endpoint-url
+   AZURE_SQL_CONNECTION_STRING=your-azure-sql-endpoint
+   ```
 
-Run `pip install -r requirements.txt` to install backend dependencies.
+3. **Install backend dependencies:**
+   (Highly recommended to create a venv to avoid package issues)
+   ```
+   pip install -r requirements.txt
+   ```
 
-Add cover_page.pptx to /app/templates. (not required if youre not generating ppts)
+5. **(Optional) Add PPTX template:**  
+   Place `cover_page.pptx` into `/app/templates/` if you want to generate PowerPoint files.
 
-Populate /knowledge with any relevant knowledge documents (PDF, PPTX)
+6. **(Optional) Add knowledge documents:**  
+   Place relevant PDF or PPTX files into `/knowledge/` to provide context for answer generation.
 
-Now run `py main.py` in /backend to run the backend.
+7. **Run the backend:**
+   ```
+   python main.py
+   ```
+   This starts a FastAPI server on port 8000.
 
 ### Frontend
 
-Navigate to /frontend.
+1. **Navigate to the frontend directory:**
+   ```
+   cd frontend
+   ```
 
-Run `npm install` to install frontend dependencies.
+2. **Install frontend dependencies:**
+   ```
+   npm install
+   ```
 
-Now run `npm run dev` to run the frontend.
+3. **Start the frontend development server:**
+   ```
+   npm run dev
+   ```
+   The app will run locally and communicate with the backend on `http://127.0.0.1:8000`.
