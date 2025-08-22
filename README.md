@@ -20,14 +20,16 @@ Automating RFP generation using AI agents.
    ```
    **NOTE:** Run backend/create_db.py if you use a local SQL db (i.e. the string provided in .env.example). This script creates all the tables. 
 
+
 3. **Install backend dependencies:**
    (Highly recommended to create a venv to avoid package issues)
    ```
    pip install -r requirements.txt
    ```
    If you choose to not use a venv and encounter an error with the fitz package (with error message similar to "from frontend import *"), run `pip uninstall fitz` to resolve it.
-      
-5. **(Optional) Add PPTX template:**
+
+5. **(Optional) Add PPTX template:**  
+
    Place `cover_page.pptx` into `/app/templates/` if you want to generate PowerPoint files.
 
 6. **(Optional) Add knowledge documents:**  
