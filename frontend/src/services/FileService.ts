@@ -24,9 +24,9 @@ export const getUploadedFiles = async (): Promise<fileStatus[]> => {
     return response.data;
 };
 
-export const downloadFile = (filename: string): void => {
-    console.log("DOWNLOAD: we are downloading the file: ", filename);
-    const downloadURL = `${API_BASE_URL}/files/download/${filename}`;
+export const downloadFile = (rfpId: number, filename: string): void => {
+    console.log("DOWNLOAD: we are downloading the file: ", rfpId);
+    const downloadURL = `${API_BASE_URL}/files/download/${rfpId}`;
     const link = document.createElement('a');
     link.href = downloadURL;
     link.download = filename;
@@ -35,11 +35,11 @@ export const downloadFile = (filename: string): void => {
     document.body.removeChild(link);
 }
 
-export const reviseFile = async (filename: string, file: File): Promise<UploadResponse> => {
+export const reviseFile = async (rfpId: number, file: File): Promise<UploadResponse> => {
     const formData = new FormData();
     formData.append('file', file)
 
-    const response = await axios.post(`${API_BASE_URL}/files/revise/${filename}`, formData, {
+    const response = await axios.post(`${API_BASE_URL}/files/revise/${rfpId}`, formData, {
         headers: {
             'Content-type': 'multipart/form-data',
         }
@@ -47,9 +47,9 @@ export const reviseFile = async (filename: string, file: File): Promise<UploadRe
     return response.data;
 }
 
-export const downloadPPT = (filename: string): void => {
+export const downloadPPT = (rfpId: number, filename: string): void => {
     console.log("DOWNLOAD: we are downloading the file: ", filename);
-    const downloadURL = `${API_BASE_URL}/files/downloadppt/${filename}`;
+    const downloadURL = `${API_BASE_URL}/files/downloadppt/${rfpId}`;
     const link = document.createElement('a');
     link.href = downloadURL;
     link.download = filename;
@@ -58,29 +58,29 @@ export const downloadPPT = (filename: string): void => {
     document.body.removeChild(link);
 }
 
-export const generatePPT = async (filename: string) => {
-    console.log("PPTGEN: Generating ppt for file: ", filename)
-    const generateURL = `${API_BASE_URL}/files/generateppt/${filename}`;
+export const generatePPT = async (rfpId: number) => {
+    console.log("PPTGEN: Generating ppt for file: ", rfpId)
+    const generateURL = `${API_BASE_URL}/files/generateppt/${rfpId}`;
 
     const response = await axios.post(generateURL, null, {
         headers: {
             'Content-type': 'application/json',
         },
     });
-    console.log("PPTGEN: Successfully generated ppt for: ", filename);
+    console.log("PPTGEN: Successfully generated ppt for: ", rfpId);
     return response;
 }
 
-export const generateAnswers = async (filename: string) => {
-    console.log("GENERATE: Generating answers for file: ", filename)
-    const generateURL = `${API_BASE_URL}/files/generate/${filename}`;
+export const generateAnswers = async (rfpId: number) => {
+    console.log("GENERATE: Generating answers for file: ", rfpId)
+    const generateURL = `${API_BASE_URL}/files/generate/${rfpId}`;
 
     const response = await axios.post(generateURL, null, {
         headers: {
             'Content-type': 'application/json',
         },
     });
-    console.log("GENERATE: Successfully generated file: ", filename);
+    console.log("GENERATE: Successfully generated file: ", rfpId);
 
     return response;
 }

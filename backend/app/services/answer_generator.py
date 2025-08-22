@@ -148,6 +148,7 @@ class Generator:
         Answer:"""
     
         print("LLM: Generating response for question: " + question)
+        print("API Key:", self._client.api_key)
         response = await self._client.chat.completions.create(
             model=self._model,
             messages=[

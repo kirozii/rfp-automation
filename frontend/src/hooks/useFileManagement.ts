@@ -9,17 +9,17 @@ interface UseFileUploadReturn {
     uploadedFiles: fileStatus[],
     fileProcessingStatus: Record<string, FileProcessingState>;
     handleFileUpload: (acceptedFile: File[]) => Promise<void>;
-    handleFileDownload: (filename: string) => void;
-    handleReviseFile: (filename: string, file: File) => Promise<void>;
-    handleGenerateAnswers: (filename: string) => Promise<void>;
-    handleGeneratePPT: (filename: string) => Promise<void>;
-    handleDownloadPPT: (filename: string) => void;
+    handleFileDownload: (rfpId: number, filename: string) => void;
+    handleReviseFile: (rfpId: number, file: File) => Promise<void>;
+    handleGenerateAnswers: (rfpId: number) => Promise<void>;
+    handleGeneratePPT: (rfpId: number) => Promise<void>;
+    handleDownloadPPT: (rfpId: number, filename: string) => void;
 }
 
 const useFileManagement = (): UseFileUploadReturn => {
     const [status, setStatus] = useState<uploadStatus>('idle');
     const [uploadedFiles, setUploadedFiles] = useState<fileStatus[]>([]);
-    const [fileProcessingStatus, setFileProcessingStatus] = useState<Record<string, FileProcessingState>>({});
+    const [fileProcessingStatus, setFileProcessingStatus] = useState<Record<number, FileProcessingState>>({});
 
     const handleFileUpload = useCallback(async (acceptedFile: File[]) => {
         if (acceptedFile.length === 0) return;
@@ -45,21 +45,12 @@ const useFileManagement = (): UseFileUploadReturn => {
             const fetchedFiles = await getUploadedFiles();
             setUploadedFiles(fetchedFiles);
             console.log("FETCH: Files fetched:", fetchedFiles)
-            const newProcessingStatus: Record<string, FileProcessingState> = {};
-            fetchedFiles.forEach(file => {
-                newProcessingStatus[file.name] = fileProcessingStatus[file.name] || 'idle';
-            });
 
             setFileProcessingStatus(prevStatus => {
                 const updatedStatus: Record<string, FileProcessingState> = {};
                 fetchedFiles.forEach(file => {
-                    updatedStatus[file.name] = prevStatus[file.name] || 'idle';
+                    updatedStatus[file.rfp_id] = prevStatus[file.rfp_id] || 'idle';
                 });
-                for (const key in prevStatus) {
-                    if (!fetchedFiles.some(f => f.name === key)) {
-                        delete updatedStatus[key];
-                    }
-                }
                 return updatedStatus;
             });
         } catch (err) {
@@ -68,61 +59,51 @@ const useFileManagement = (): UseFileUploadReturn => {
         }
     }, []);
 
-    const handleFileDownload = (filename: string) => {
-        downloadFile(filename);
-    }
+    const handleFileDownload = useCallback((rfpId: number, filename: string) => {
+        downloadFile(rfpId, filename);
+    }, []);
 
-    const handleReviseFile = async (filename: string, file: File) => {
-        setFileProcessingStatus(prev => ({ ...prev, [filename]: 'revising_file' }));
+    const handleReviseFile = useCallback(async (rfpId: number, file: File) => {
+        setFileProcessingStatus(prev => ({ ...prev, [rfpId]: 'revising_file' }));
         try {
-            await reviseFile(filename, file);
-            alert("Uploaded revised file successfully")
+            await reviseFile(rfpId, file);
+            alert("Uploaded revised file successfully");
             await refreshFiles();
         } catch (err) {
-            console.error("REVISE: Error while revising file: ", err)
-            alert("Error while revising. Check console.")
+            console.error("REVISE: Error while revising file:", err);
+            alert("Error while revising. Check console.");
         } finally {
-            setFileProcessingStatus(prev => ({ ...prev, [filename]: 'idle' }));
+            setFileProcessingStatus(prev => ({ ...prev, [rfpId]: 'idle' }));
         }
-    }
+    }, [refreshFiles]);
 
-    const handleDownloadPPT = (filename: string) => {
-        downloadPPT(filename);
-    }
+    const handleDownloadPPT = useCallback((rfpId: number, filename: string) => {
+        downloadPPT(rfpId, filename);
+    }, []);
 
-    const handleGenerateAnswers = async (filename: string) => {
-        setFileProcessingStatus(prev => ({ ...prev, [filename]: 'generating_spreadsheet' }));
+    const handleGenerateAnswers = async (rfpId: number) => {
+        setFileProcessingStatus(prev => ({ ...prev, [rfpId]: 'generating_spreadsheet' }));
         try {
-            await generateAnswers(filename);
-            alert("Answers generated for " + filename);
+            await generateAnswers(rfpId);
+            alert("Answers generated for " + rfpId);
             await refreshFiles();
-            setUploadedFiles((prevFiles) =>
-                prevFiles.map((file) =>
-                    file.name === filename ? { ...file, generated: true } : file
-                )
-            );
         } catch (err) {
             console.log("ERROR: ", err);
         } finally {
-            setFileProcessingStatus(prev => ({ ...prev, [filename]: 'idle' }));
+            setFileProcessingStatus(prev => ({ ...prev, [rfpId]: 'idle' }));
         }
     }
 
-    const handleGeneratePPT = async (filename: string) => {
-        setFileProcessingStatus(prev => ({ ...prev, [filename]: 'generating_ppt' }));
+    const handleGeneratePPT = async (rfpId: number) => {
+        setFileProcessingStatus(prev => ({ ...prev, [rfpId]: 'generating_ppt' }));
         try {
-            await generatePPT(filename);
-            alert("PPT generated for " + filename);
+            await generatePPT(rfpId);
+            alert("PPT generated for id: " + rfpId);
             await refreshFiles();
-            setUploadedFiles((prevFiles) =>
-                prevFiles.map((file) =>
-                    file.name === filename ? { ...file, pptGenerated: true } : file
-                )
-            );
         } catch (err) {
             console.log("ERROR: ", err);
         } finally {
-            setFileProcessingStatus(prev => ({ ...prev, [filename]: 'idle' }));
+            setFileProcessingStatus(prev => ({ ...prev, [rfpId]: 'idle' }));
         }
     }
 

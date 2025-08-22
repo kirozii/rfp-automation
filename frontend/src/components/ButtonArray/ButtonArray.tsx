@@ -4,12 +4,12 @@ import styles from "./ButtonArray.module.css"
 
 interface ButtonArrayProps {
     file: fileStatus
-    fileProcessingStatus: Record<string, FileProcessingState>;
-    handleFileDownload: (fileName: string) => void;
-    generateAnswers: (fileName: string) => Promise<void>;
-    handleDownloadPPT: (filename: string) => void;
-    handleGeneratePPT: (filename: string) => Promise<void>;
-    handleReviseFile: (filename: string, file: File) => Promise<void>;
+    fileProcessingStatus: Record<number, FileProcessingState>;
+    handleFileDownload: (rfpId: number, fileName: string) => void;
+    generateAnswers: (rfpId: number) => Promise<void>;
+    handleReviseFile: (rfpId: number, file: File) => Promise<void>;
+    handleDownloadPPT: (rfpId: number, filename: string) => void;
+    handleGeneratePPT: (rfpId: number) => Promise<void>;
 }
 
 const ButtonArray: React.FC<ButtonArrayProps> = ({ file, fileProcessingStatus, handleFileDownload, generateAnswers, handleDownloadPPT, handleGeneratePPT, handleReviseFile }) => {
@@ -18,9 +18,9 @@ const ButtonArray: React.FC<ButtonArrayProps> = ({ file, fileProcessingStatus, h
     const onRevisionFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files.length > 0) {
             const fileToUpload = event.target.files[0];
-            await handleReviseFile(file.name, fileToUpload);
+            await handleReviseFile(file.rfp_id, fileToUpload);
         }
-    }, [file.name, handleReviseFile]);
+    }, [file.rfp_id, handleReviseFile]);
 
     const handleReviseButtonClick = useCallback(() => {
         if (hiddenFileInput.current) {
@@ -28,11 +28,11 @@ const ButtonArray: React.FC<ButtonArrayProps> = ({ file, fileProcessingStatus, h
         }
     }, []);
 
-    const isProcessing = fileProcessingStatus[file.name] !== 'idle';
+    const isProcessing = fileProcessingStatus[file.rfp_id] !== 'idle';
 
     return (
         <div>
-            {file.generated && !file.revised ? (
+            {file.status === "pending_review" ? (
                 <>
                     <input
                         type="file"
@@ -42,52 +42,64 @@ const ButtonArray: React.FC<ButtonArrayProps> = ({ file, fileProcessingStatus, h
                         style={{ display: 'none' }}
                     />
                     <button
+                        onClick={() => handleFileDownload(file.rfp_id, file.filename)}
+                        className={styles.downloadButton}
+                        disabled={isProcessing}
+                    >
+                        Download Spreadsheet
+                    </button>
+                    <button
                         onClick={handleReviseButtonClick}
-                        disabled={isProcessing || fileProcessingStatus[file.name] === 'revising_file'}
+                        disabled={isProcessing || fileProcessingStatus[file.rfp_id] === 'revising_file'}
                         className={styles.downloadButton}
                     >
-                        {fileProcessingStatus[file.name] === 'revising_file' ? "Uploading Revision..." : "Upload Revised File"}
+                        {fileProcessingStatus[file.rfp_id] === 'revising_file' ? "Uploading Revision..." : "Upload Revised File"}
                     </button>
                 </>
-            ) : file.generated && file.revised ? (
+            ) : file.status === "reviewed" ? (
                 <>
-                    {!file.pptGenerated ? (
-                        <button
-                            onClick={() => handleGeneratePPT(file.name)}
-                            disabled={isProcessing || fileProcessingStatus[file.name] === 'generating_ppt'}
-                            className={styles.downloadButton}
-                        >
-                            {fileProcessingStatus[file.name] === 'generating_ppt' ? "Generating PPT..." : "Generate PPT"}
-                        </button>
-                    ) : (
-                        <button
-                            onClick={() => handleDownloadPPT(file.name)}
-                            className={styles.downloadButton}
-                            disabled={isProcessing}
-                        >
-                            Download PPT
-                        </button>
-                    )}
+                    <button
+                        onClick={() => handleFileDownload(file.rfp_id, file.filename)}
+                        className={styles.downloadButton}
+                        disabled={isProcessing}
+                    >
+                        Download Spreadsheet
+                    </button>
+                    <button
+                        onClick={() => handleGeneratePPT(file.rfp_id)}
+                        disabled={isProcessing || fileProcessingStatus[file.rfp_id] === 'generating_ppt'}
+                        className={styles.downloadButton}
+                    >
+                        {fileProcessingStatus[file.rfp_id] === 'generating_ppt' ? "Generating PPT..." : "Generate PPT"}
+                    </button>
                 </>
+            ) : file.status === "completed" ? (
+                <>
+                    <button
+                        onClick={() => handleFileDownload(file.rfp_id, file.filename)}
+                        className={styles.downloadButton}
+                        disabled={isProcessing}
+                    >
+                        Download Spreadsheet
+                    </button>
+                    <button
+                        onClick={() => handleDownloadPPT(file.rfp_id, file.filename)}
+                        className={styles.downloadButton}
+                        disabled={isProcessing}
+                    >
+                        Download PPT
+                    </button>
+                </>
+            ) : file.status === "uploaded" ? (
+                <button
+                    onClick={() => generateAnswers(file.rfp_id)}
+                    disabled={isProcessing || fileProcessingStatus[file.rfp_id] === 'generating_spreadsheet'}
+                    className={styles.downloadButton}
+                >
+                    {fileProcessingStatus[file.rfp_id] === 'generating_spreadsheet' ? "Generating answers..." : "Generate Spreadsheet"}
+                </button>
             ) : (
                 null
-            )}
-            {file.generated ? (
-                <button
-                    onClick={() => handleFileDownload(file.name)}
-                    className={styles.downloadButton}
-                    disabled={isProcessing}
-                >
-                    Download Spreadsheet
-                </button>
-            ) : (
-                <button
-                    onClick={() => generateAnswers(file.name)}
-                    disabled={isProcessing || fileProcessingStatus[file.name] === 'generating_spreadsheet'}
-                    className={styles.downloadButton}
-                >
-                    {fileProcessingStatus[file.name] === 'generating_spreadsheet' ? "Generating answers..." : "Generate Spreadsheet"}
-                </button>
             )}
         </div>
     );
